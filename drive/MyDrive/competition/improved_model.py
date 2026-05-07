@@ -73,7 +73,33 @@ def add_features(df):
 train = add_features(train)
 test  = add_features(test)
 
-# ── 3. Target Encoding for School ─────────────────────────────────────────────
+# ── 3. School Conference Grouping ────────────────────────────────────────────
+sec   = ['Alabama','LSU','Georgia','Florida','Auburn','Tennessee','Mississippi',
+         'Mississippi St.','Arkansas','South Carolina','Kentucky','Vanderbilt',
+         'Missouri','Texas A&M']
+big10 = ['Ohio St.','Michigan','Penn St.','Wisconsin','Iowa','Michigan St.',
+         'Nebraska','Minnesota','Northwestern','Indiana','Purdue','Illinois',
+         'Maryland','Rutgers']
+acc   = ['Clemson','Florida St.','Miami (FL)','Virginia Tech','North Carolina',
+         'North Carolina St.','Boston Col.','Virginia','Georgia Tech','Pittsburgh',
+         'Syracuse','Wake Forest','Louisville','Duke']
+big12 = ['Oklahoma','Texas','Baylor','TCU','Oklahoma St.','Kansas St.',
+         'Iowa St.','West Virginia','Kansas','Texas Tech']
+pac12 = ['USC','UCLA','Oregon','Washington','Stanford','California',
+         'Arizona St.','Arizona','Utah','Colorado','Oregon St.','Washington St.']
+
+def get_conference_tier(school):
+    if school in sec:   return 3
+    if school in big10: return 3
+    if school in acc:   return 2
+    if school in big12: return 2
+    if school in pac12: return 2
+    return 1
+
+train['Conference_Tier'] = train['School'].map(get_conference_tier)
+test['Conference_Tier']  = test['School'].map(get_conference_tier)
+
+# ── 4. Target Encoding for School ─────────────────────────────────────────────
 # Use 5-fold out-of-fold to avoid leakage
 school_te = np.zeros(len(train))
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
