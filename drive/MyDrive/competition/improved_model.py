@@ -14,7 +14,29 @@ test  = pd.read_csv("input/test.csv",  index_col="Id")
 target = train["Drafted"].copy()
 train  = train.drop(columns=["Drafted"])
 
-# ── 2. Feature Engineering ────────────────────────────────────────────────────
+# ── 2. Position-Specific Imputation ──────────────────────────────────────────
+# Fill missing combine values with the median for that specific Position.
+# A DT and a CB have very different distributions, so global medians are misleading.
+combine_cols = ["Sprint_40yd", "Vertical_Jump", "Bench_Press_Reps",
+                "Broad_Jump", "Agility_3cone", "Shuttle"]
+
+# Compute position medians from train only (no leakage)
+pos_medians = train.groupby("Position")[combine_cols].median()
+
+def impute_by_position(df, pos_medians, global_medians):
+    df = df.copy()
+    for col in combine_cols:
+        # Map each row's Position to its position-level median
+        pos_fill = df["Position"].map(pos_medians[col])
+        # Where position median is also NaN (unseen position), fall back to global
+        df[col] = df[col].fillna(pos_fill).fillna(global_medians[col])
+    return df
+
+global_medians = train[combine_cols].median()
+train = impute_by_position(train, pos_medians, global_medians)
+test  = impute_by_position(test,  pos_medians, global_medians)
+
+# ── 3. Feature Engineering ────────────────────────────────────────────────────
 def add_features(df):
     df = df.copy()
 
